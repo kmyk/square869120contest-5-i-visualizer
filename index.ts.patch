@@ -1,0 +1,328 @@
+20a21,23
+>         public isEOF(): boolean {
+>             return this.content.length <= this.y;
+>         }
+251,255c254,257
+<         public taxis: [number, number][];
+<         public passengers: [number, number][];
+<         public zones: [number, number][];
+<         public passengersDict: any;
+<         public zonesDict: any;
+---
+>         public h: number;
+>         public w: number;
+>         public n: number;
+>         public jewels: number[];
+261,272c263,265
+<             const t = parser.getInt();
+<             parser.getNewline();
+<             this.taxis = [];
+<             for (let i = 0; i < t; ++ i) {
+<                 const x = parser.getInt();
+<                 const y = parser.getInt();
+<                 parser.getNewline();
+<                 this.taxis.push([ x, y ]);
+<             }
+< 
+<             // parse
+<             const p = parser.getInt();
+---
+>             this.h = parser.getInt();
+>             this.w = parser.getInt();
+>             this.n = parser.getInt();
+274,277c267,268
+<             this.passengers = [];
+<             this.passengersDict = {};
+<             for (let i = 0; i < p; ++ i) {
+<                 const x = parser.getInt();
+---
+>             this.jewels = [];
+>             for (let i = 0; i < this.n; ++ i) {
+279,289d269
+<                 parser.getNewline();
+<                 this.passengers.push([ x, y ]);
+<                 this.passengersDict[[ x, y ].toString()] = i;
+<             }
+< 
+<             // parse
+<             const z = parser.getInt();
+<             parser.getNewline();
+<             this.zones = [];
+<             this.zonesDict = {};
+<             for (let i = 0; i < z; ++ i) {
+291d270
+<                 const y = parser.getInt();
+293,294c272
+<                 this.zones.push([ x, y ]);
+<                 this.zonesDict[[ x, y ].toString()] = i;
+---
+>                 this.jewels.push(y * this.w + x);
+300c278,279
+<         public commands: [number, number, number[]][];
+---
+>         public pattern: [number, number][];
+>         public commands: string[];
+306c285
+<             const k = parser.getInt();
+---
+>             const p = parser.getInt();
+308,314c287,288
+<             this.commands = [];
+<             for (let i = 0; i < k; ++ i) {
+<                 const command = parser.getWord();
+<                 if (command != "MOVE") {
+<                     parser.reportError("\"MOVE\" expected");
+<                 }
+<                 const x = parser.getInt();
+---
+>             this.pattern = [];
+>             for (let i = 0; i < p; ++ i) {
+316,321c290,296
+<                 const t = parser.getInt();
+<                 const targets = [];
+<                 for (let j = 0; j < t; ++ j) {
+<                     const target = parser.getInt();
+<                     targets.push(target);
+<                 }
+---
+>                 const x = parser.getInt();
+>                 parser.getNewline();
+>                 this.pattern.push([ y, x ]);
+>             }
+>             this.commands = [];
+>             while (! parser.isEOF()) {
+>                 const c = parser.getWord();
+323c298
+<                 this.commands.push([ x, y, targets ]);
+---
+>                 this.commands.push(c);
+329a305
+>         public output: OutputFile;
+331,332d306
+<         public taxis: { x: number, y: number, carrying: boolean }[];
+<         public passengers: { carried: boolean }[];
+334,336c308,311
+<         public command: [ number, number, number[] ] | null;
+<         public penaltyDelta: number | null;
+<         public penaltySum: number;
+---
+>         public y: number;
+>         public x: number;
+>         public jewels: number[];
+>         public revealed: number[];
+338,339c313,314
+<         constructor(input: InputFile);
+<         constructor(frame: TesterFrame, command: [number, number, number[]]);
+---
+>         constructor(input: InputFile, output: OutputFile);
+>         constructor(frame: TesterFrame);
+343a319
+>                 this.output = something2 as OutputFile;
+346d321
+<                 this.command = null;
+348,357c323,327
+<                 this.taxis = [];
+<                 for (const taxi of this.input.taxis) {
+<                     this.taxis.push({ x: taxi[0], y: taxi[1], carrying: false });
+<                 }
+<                 this.passengers = [];
+<                 for (let i = 0; i < this.input.passengers.length; ++ i) {
+<                     this.passengers.push({ carried: false });
+<                 }
+<                 this.penaltyDelta = null;
+<                 this.penaltySum = 0;
+---
+>                 this.y = 0;
+>                 this.x = 0;
+>                 this.jewels = this.input.jewels.slice();
+>                 this.revealed = [];
+>                 for (let z = 0; z < this.input.h * this.input.w; ++ z) this.revealed.push(0);
+361d330
+<                 this.command = something2 as [number, number, number[]];
+362a332
+>                 this.output = this.previousFrame.output;
+365,385c335,349
+<                 // apply the command
+<                 this.taxis = JSON.parse(JSON.stringify(this.previousFrame.taxis));  // deep copy
+<                 this.passengers = JSON.parse(JSON.stringify(this.previousFrame.passengers));  // deep copy
+<                 const dx = this.command[0];
+<                 const dy = this.command[1];
+<                 for (let i of this.command[2]) {
+<                     i -= 1;
+<                     if (i < 0 || this.taxis.length <= i) alert("<tester>: index out of range");
+<                     this.taxis[i].x += dx;
+<                     this.taxis[i].y += dy;
+<                     const key = [ this.taxis[i].x, this.taxis[i].y ].toString();
+<                     if (this.taxis[i].carrying) {
+<                         const j = this.input.zonesDict[key];
+<                         if (j !== undefined) {
+<                             this.taxis[i].carrying = false;
+<                         }
+<                     } else {
+<                         const j = this.input.passengersDict[key];
+<                         if (j !== undefined && ! this.passengers[j].carried) {
+<                             this.taxis[i].carrying = true;
+<                             this.passengers[j].carried = true;
+---
+>                 const cmd = this.output.commands[this.age - 1];
+>                 this.y = this.previousFrame.y + { 'U': -1, 'D': +1, 'R':  0, 'L':  0 }[cmd];
+>                 this.x = this.previousFrame.x + { 'U':  0, 'D':  0, 'R': +1, 'L': -1 }[cmd];
+>                 this.jewels = this.previousFrame.jewels.slice();
+>                 if (this.jewels.indexOf(this.y * this.input.w + this.x) != -1) {
+>                     const i = this.jewels.indexOf(this.y * this.input.w + this.x);
+>                     this.jewels.splice(i, 1);
+>                 }
+>                 let close = false;
+>                 for (const p of this.output.pattern) {
+>                     const ny = this.y + p[0];
+>                     const nx = this.x + p[1];
+>                     if (0 <= ny && ny < this.input.h && 0 <= nx && nx < this.input.w) {
+>                         if (this.jewels.indexOf(ny * this.input.w + nx) != -1) {
+>                             close = true;
+389,390c353,362
+<                 this.penaltyDelta = Math.sqrt(dx * dx + dy * dy) * (1 + this.command[2].length / this.taxis.length);
+<                 this.penaltySum = this.previousFrame.penaltySum + this.penaltyDelta;
+---
+>                 this.revealed = this.previousFrame.revealed.slice();
+>                 this.revealed[this.y * this.input.w + this.x] = 2;
+>                 for (const p of this.output.pattern) {
+>                     const ny = this.y + p[0];
+>                     const nx = this.x + p[1];
+>                     if (0 <= ny && ny < this.input.h && 0 <= nx && nx < this.input.w) {
+>                         const z = ny * this.input.w + nx;
+>                         this.revealed[z] = ! close ? 2 : Math.max(this.revealed[z], 1);
+>                     }
+>                 }
+400c372
+<             this.frames = [ new TesterFrame(input) ];
+---
+>             this.frames = [ new TesterFrame(input, output) ];
+403c375
+<                 this.frames.push( new TesterFrame(lastFrame, command) );
+---
+>                 this.frames.push( new TesterFrame(lastFrame) );
+411,415c383,384
+<         private xInput: HTMLInputElement;
+<         private yInput: HTMLInputElement;
+<         private taxisInput: HTMLInputElement;
+<         private penaltyDeltaInput: HTMLInputElement;
+<         private penaltySumInput: HTMLInputElement;
+---
+>         private scoreInput: HTMLInputElement;
+>         private moveInput: HTMLInputElement;
+426,430c395,396
+<             this.xInput = <HTMLInputElement> document.getElementById("xInput");
+<             this.yInput = <HTMLInputElement> document.getElementById("yInput");
+<             this.taxisInput = <HTMLInputElement> document.getElementById("taxisInput");
+<             this.penaltyDeltaInput = <HTMLInputElement> document.getElementById("penaltyDeltaInput");
+<             this.penaltySumInput = <HTMLInputElement> document.getElementById("penaltySumInput");
+---
+>             this.moveInput = <HTMLInputElement> document.getElementById("moveInput");
+>             this.scoreInput = <HTMLInputElement> document.getElementById("scoreInput");
+435,447c401,402
+<             if (frame.age == 0) {
+<                 this.xInput.value = "";
+<                 this.yInput.value = "";
+<                 this.taxisInput.value = "";
+<                 this.penaltyDeltaInput.value = "";
+<                 this.penaltySumInput.value = "0";
+<             } else {
+<                 this.xInput.value = frame.command[0].toString();
+<                 this.yInput.value = frame.command[1].toString();
+<                 this.taxisInput.value = frame.command[2].toString();
+<                 this.penaltyDeltaInput.value = frame.penaltyDelta.toString();
+<                 this.penaltySumInput.value = frame.penaltySum.toString();
+<             }
+---
+>             this.scoreInput.value = "";
+>             this.moveInput.value = frame.age.toString();
+450,477c405
+<             let minX = 0;
+<             let maxX = 0;
+<             let minY = 0;
+<             let maxY = 0;
+<             const updateMinMaxXY = (x: number, y: number) => {
+<                 minX = Math.min(minX, x);
+<                 maxX = Math.max(maxX, x);
+<                 minY = Math.min(minY, y);
+<                 maxY = Math.max(maxY, y);
+<             };
+<             for (const taxi of frame.input.taxis) {
+<                 updateMinMaxXY(taxi[0], taxi[1]);
+<             }
+<             for (const passenger of frame.input.passengers) {
+<                 updateMinMaxXY(passenger[0], passenger[1]);
+<             }
+<             for (const zone of frame.input.zones) {
+<                 updateMinMaxXY(zone[0], zone[1]);
+<             }
+<             const size = Math.max(maxX - minX, maxY - minY) * 1.2;
+<             const offset = - (Math.min(0, minX, minY)) * 1.2;
+<             const scale = this.canvas.height / size;  // height == width
+<             const transform = (z: number) => {
+<                 return Math.floor((z + offset) * scale);
+<             };
+<             const drawPixel = (x: number, y: number) => {
+<                 this.ctx.fillRect(transform(x), transform(y), 5, 5);
+<             };
+---
+>             const scale = Math.min(this.canvas.height, this.canvas.width) / frame.input.h;  // height == width
+480,483c408,409
+<             const height = this.canvas.height;
+<             const width = this.canvas.width;
+<             this.ctx.fillStyle = 'white';
+<             this.ctx.fillRect(0, 0, width, height);
+---
+>             this.ctx.fillStyle = 'black';
+>             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+486,512c412,433
+<             this.ctx.fillStyle = 'green';
+<             for (let i = 0; i < frame.input.passengers.length; ++ i) {
+<                 const passenger = frame.input.passengers[i];
+<                 const carried = frame.passengers[i].carried;
+<                 if (carried) continue;
+<                 drawPixel(passenger[0], passenger[1]);
+<             }
+<             this.ctx.fillStyle = 'red';
+<             for (const taxi of frame.taxis) {
+<                 drawPixel(taxi.x, taxi.y);
+<             }
+<             this.ctx.fillStyle = 'blue';
+<             for (const zone of frame.input.zones) {
+<                 drawPixel(zone[0], zone[1]);
+<             }
+< 
+<             // draw lines
+<             this.ctx.strokeStyle = 'black';
+<             this.ctx.lineWidth = 1;
+<             if (frame.age != 0) {
+<                 for (let i = 0; i < frame.input.taxis.length; ++ i) {
+<                     const cur = frame.taxis[i];
+<                     const prv = frame.previousFrame.taxis[i];
+<                     this.ctx.beginPath();
+<                     this.ctx.moveTo(transform(prv.x) + 2, transform(prv.y) + 2);
+<                     this.ctx.lineTo(transform(cur.x) + 2, transform(cur.y) + 2);
+<                     this.ctx.stroke();
+---
+>             console.log(frame);
+>             for (let y = 0; y < frame.input.h; ++ y) {
+>                 for (let x = 0; x < frame.input.w; ++ x) {
+>                     const z = y * frame.input.w + x;
+>                     if (y == frame.y && x == frame.x) {
+>                         this.ctx.fillStyle = 'red';
+>                     } else if (frame.jewels.indexOf(z) != -1) {
+>                         this.ctx.fillStyle = 'blue';
+>                     } else if (frame.revealed[z] == 2) {
+>                         this.ctx.fillStyle = 'white';
+>                     } else if (frame.revealed[z] == 1) {
+>                         this.ctx.fillStyle = 'gray';
+>                     } else {
+>                         this.ctx.fillStyle = 'black';
+>                     }
+>                     this.ctx.fillRect(x * scale + 1, y * scale + 1, scale - 1, scale - 1);
+>                     for (const p of frame.output.pattern) {
+>                         if (y == frame.y + p[0] && x == frame.x + p[1]) {
+>                             this.ctx.fillStyle = 'yellow';
+>                             this.ctx.fillRect((x + 0.2) * scale, (y + 0.2) * scale, 0.6 * scale, 0.6 * scale);
+>                         }
+>                     }
