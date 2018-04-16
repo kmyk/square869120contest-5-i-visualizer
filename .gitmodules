@@ -1,0 +1,3 @@
+[submodule "longcontest-visualizer-framework"]
+	path = longcontest-visualizer-framework
+	url = git@github.com:kmyk/longcontest-visualizer-framework.git
